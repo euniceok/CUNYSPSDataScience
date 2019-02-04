@@ -1,0 +1,102 @@
+---
+title: "Data 607 Spring 2019 HW 1 Eunice Ok"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r, results="hide"}
+library(plyr)
+library(dplyr)
+library(tidyverse)
+```
+
+
+```{r}
+# read in data from website
+shroomsdf <- read_csv("https://archive.ics.uci.edu/ml/machine-learning-databases/mushroom/agaricus-lepiota.data",col_names=FALSE)
+
+# take a look at the data
+head(shroomsdf)
+```
+
+```{r}
+# check out unique values of columns
+unique(shroomsdf$X1)
+```
+
+```{r}
+unique(shroomsdf$X3)
+```
+```{r}
+unique(shroomsdf$X23)
+```
+```{r}
+# rename all column names with meaningful names
+shrooms<- plyr::rename(shroomsdf,c("X1" = "class",
+  "X2" = "cap_shape",
+  "X3" = "cap_surface",
+  "X4" = "cap_color",
+  "X5" = "bruises",
+  "X6" = "odor",
+  "X7" = "gill_attachment",
+  "X8" = "gill_spacing",
+  "X9" = "gill_size",
+  "X10" = "gill_color",
+  "X11" = "stalk_shape",
+  "X12" = "stalk_root",
+  "X13" = "stalk_surface_above_ring",
+  "X14" = "stalk_surface_below_ring",
+  "X15" = "stalk_color_above_ring",
+  "X16" = "stalk_color_below_ring",
+  "X17" = "veil_type",
+  "X18" = "veil_color",
+  "X19" = "ring_number",
+  "X20" = "ring_type",
+  "X21" = "spore_print_color",
+  "X22" = "population",
+  "X23" = "habitat"))
+
+# confirm new headers
+head(shrooms)
+```
+```{r}
+# subset columns
+colnames(shrooms)
+shrooms_sm <- shrooms[c("class","cap_shape","bruises","odor","population")]
+shrooms_sm
+```
+
+
+```{r}
+# replace abbrev in data
+
+# unique(shrooms_sm$cap_shape)
+# bell=b,conical=c,convex=x,flat=f,knobbed=k,sunken=s
+shrooms_sm$cap_shape <- mapvalues(shrooms_sm$cap_shape, 
+                        from = c("x","b","s","f","k","c"), 
+                        to = c("convex","bell","sunken", "flat", "knobbed", "conical"))
+# unique(shrooms_sm$cap_shape)
+
+# unique(shrooms_sm$class)
+shrooms_sm$class <- mapvalues(shrooms_sm$class, 
+                        from = c("p","e"), 
+                        to = c("poisonous","edible"))
+#unique(shrooms_sm$bruises)
+shrooms_sm$bruises <- mapvalues(shrooms_sm$bruises, 
+                        from = c("t","f"), 
+                        to = c("bruises","no"))
+
+shrooms_sm$odor <- mapvalues(shrooms_sm$odor, 
+                        from = c("a","l","c","y","f","m","n","p","s"), 
+                        to = c("almond","anise","creosote", "fishy", "foul", 
+                               "musty","none","pungent","spicy"))
+
+shrooms_sm$population <- mapvalues(shrooms_sm$population, 
+                        from = c("a","c","n","s","v","y"), 
+                        to = c("abundant","clustered","numerous", "scattered", 
+                               "several", "solitary"))
+# unique(shrooms_sm$population)
+head(shrooms_sm)
+```
+
