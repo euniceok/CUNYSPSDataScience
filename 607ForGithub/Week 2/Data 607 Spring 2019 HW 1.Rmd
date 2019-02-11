@@ -1,0 +1,38 @@
+---
+title: "Data 607 Spring 2019 HW 2"
+author: Eunice Ok
+date: February 10, 2019
+output: html_document
+---
+
+
+Received help from: 
+
+1 https://programminghistorian.org/en/lessons/getting-started-with-mysql-using-r#add-a-user-to-connect-to-the-database
+
+2 https://mariadb.com/kb/en/library/rmariadb/ 
+
+```{r}
+localuserpassword <- "password in BB submission"
+```
+
+```{r setup}
+# install.packages("RMariaDB")
+library(RMariaDB)
+```
+
+```{r}
+# connect to database
+storiesDb <- dbConnect(RMariaDB::MariaDB(), user='cuny_user', password=localuserpassword, dbname='movies', host='localhost')
+dbListTables(storiesDb)
+# dbDisconnect(storiesDb)
+```
+
+
+```{r}
+# fetch data from database
+res <- dbSendQuery(storiesDb, "SELECT * FROM movies.movie_reviews")
+data <- dbFetch(res)
+head(data)
+```
+
