@@ -1,0 +1,83 @@
+---
+title: "Data 607 Spring 2019 HW 3"
+author: "Eunice Ok"
+date: "2/17/2019"
+output: html_document
+---
+
+3. Copy the introductory example. The vector name stores the extracted names 
+```{r}
+library(stringr)
+
+raw.data <-"555-1239Moe Szyslak(636) 555-0113Burns, C. Montgomery555-6542Rev. Timothy Lovejoy555 8904Ned Flanders636-555-3226Simpson, Homer5553642Dr. Julius Hibbert"
+
+name <- unlist(str_extract_all(raw.data, "[[:alpha:]., ]{2,}"))
+name
+```
+
+3.1 Use the tools of this chapter to rearrange the vector so that all elements conform to the standard first_name last_name. 
+
+```{r}
+# separate names that need rearranging from the others
+commas <- unlist(str_extract_all(name, ".*,.*"))
+nocomma <- unlist(str_extract_all(name, "^[^,]+$"))
+
+# the first ^ asserts that we're at the beginning of the string. Next [^,] is a character class which means "Any character except ,." + next to something means "Match this one or more times." Finally, $ asserts that we're now at the end of the string.
+
+# separate first/last names. clean up. insert into dataframe rearranged.
+first <- unlist(str_extract_all(commas, ",.*$")) # match everything repeatedly after the first comma until end of string
+first <- str_replace_all(first, pattern = ", ", replacement ="") 
+last <- unlist(str_extract_all(commas, "^[^,]+,")) # match everything except comma until comma
+last <- str_replace_all(last, pattern = ",", replacement ="") 
+
+df1 <- data.frame(first = first, last=last)
+
+# separate names. clean up. insert into dataframe in same order. 
+firstnoc <- unlist(str_extract_all(nocomma, "^[^,]+ "))
+lastnoc <- unlist(str_extract_all(nocomma, "[^ ]*$"))
+lastnoc <- lastnoc[lastnoc != ""]
+
+df2 <-  data.frame(first=firstnoc,last=lastnoc)
+
+# combine the two dataframes
+roster <- rbind(df1, df2)
+roster 
+```
+3.2 Construct a logical vector indicating whether a character has a title (i.e., Rev. and Dr.). 
+```{r}
+
+# assuming conventional titles have at least 2 letters and a period, identify them
+titles <- unlist(str_extract_all(name, "[[a-zA-Z]]{2,}\\."))
+str_detect(name, "[[a-zA-Z]]{2,}\\.")
+```
+
+
+3.3 Construct a logical vector indicating whether a character has a second name.
+```{r}
+
+# trim white space from first names
+roster$first <- trimws(roster$first, which="both")
+
+# trim white space between known titles and first names so we don't accidentally count the title as a name 
+roster$first<- str_replace_all(roster$first, "Rev. ", "Rev.") 
+roster$first<- str_replace_all(roster$first, "Dr. ", "Dr.")
+
+# trim white space from filtered first names
+roster$first <- trimws(roster$first, which="both")
+
+# identify the existence of middle names based on if there is at least one white space in first nae
+unlist(str_extract_all(roster$first, "[:graph:]*[[:space:]][:graph:]*+"))
+
+```
+
+4. Describe the types of strings that conform to the following regular expressions and construct an example that is matched by the regular expression. 
+
+4.1 an unspecified (greedy) number of digits from 0 to 9 then a literal slash at the end. eg 000\
+
+4.2 the word edges are defined as starting and ending with lower case alphabet letters from 1 to 4 characters long. eg abc
+
+4.3 any type and number of characters or nothing then a literal dot and txt. eg a.txt
+
+4.4 digits at the beginning and the end and the middle. an initial set of 2 digits, another 2, and then 4 digits, each separated by backslashes 43/12/6578   
+
+4.5 There are three parts. The first two do not have to exist because there are question marks. If they do, There is any number of characters within the first bracket. The second is any characters and any number of them. And the third is surrounded by brackets and contains at least one literal number 1. e.g.  <(!) > sdf </1>  
