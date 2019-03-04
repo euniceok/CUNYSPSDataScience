@@ -1,0 +1,174 @@
+---
+title: "Data 607 Spring 2019 HW 5"
+author: "Eunice Ok"
+date: "3/3/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+require(tidyr)
+require(dplyr)
+library(ggplot2)
+library(ggthemes)
+```
+
+
+
+#### READ IN DATA 
+```{r}
+file = "/Users/euniceok/PycharmProjects/cuny/spring2019/Week5/data/airline_delays.csv"
+df = read.csv(file, na.strings=c(""," "))
+df
+```
+
+#### TIDY and TRANSFORM DATA 
+```{r}
+df <- df %>% 
+  # convert wide dataset to long on all cols except X and X.1
+  gather(key, value, -X, -X.1, na.rm=TRUE) %>% 
+  # rename all cols to be intuitive
+  rename(city = key, counts = value, airline = X, status = X.1) %>% 
+  # fill out missing airline names
+  fill(airline) 
+head(df)
+
+# another version of tidy df for easier analysis
+tmp <- df %>% 
+  spread(status, counts) %>% 
+  rename(ontime = 'on time') %>% 
+  mutate(total = delayed + ontime)
+tmp
+
+```
+
+#### ANALYZE DATA
+
+1. calculate delay and ontime rates for each airline
+```{r}
+# what is the relative rate of delayed flights for each airline? 
+airline_delay <- tmp %>%
+  group_by(airline) %>%
+  summarise(delays = sum(delayed),totals = sum(total)) %>%
+  mutate(del_rate = delays / totals)
+
+# what is the on time rate for flights for each airline? 
+airline_ontime <- tmp %>%
+  group_by(airline) %>%
+  summarise(ontime = sum(ontime),totals = sum(total)) %>%
+  mutate(ontime_rate = ontime / totals)
+
+airline_tbl <- inner_join(airline_delay, airline_ontime, by="airline")
+airline_tbl %>% select(airline,del_rate,ontime_rate)
+```
+
+```{r}
+atplot <- airline_tbl %>% 
+    select(airline,delays, ontime) %>%
+    gather(delays, ontime, -airline) %>%
+    rename(status = delays, flightcts = ontime)  
+atplot
+```
+
+
+2. plot delay and ontime rates for each airline
+```{r}
+g <- ggplot(atplot, aes(airline, flightcts))
+g + geom_bar(aes(fill=status), width = 0.5, stat="identity") + 
+  theme(axis.text.x = element_text(angle=65, vjust=0.6)) + theme_tufte()
+```
+
+
+3. calculate delay and ontime rates for each airline and city
+```{r, include=FALSE}
+#  delay rate for each airline-city? 
+aircitydelay <- tmp %>%
+  group_by(airline, city) %>%
+  summarise(delays = sum(delayed),totals = sum(total)) %>%
+  mutate(del_rate = delays / totals)
+
+#  ontime rate for each airline-city? 
+aircityontime <- tmp %>%
+  group_by(airline, city) %>%
+  summarise(ontime = sum(ontime),totals = sum(total)) %>%
+  mutate(ontime_rate = ontime / totals)
+
+aircttbl <- inner_join(aircitydelay, aircityontime, by= c("airline" = "airline","city"="city"))
+aircttbl %>% select(airline, city, delays, ontime, del_rate, ontime_rate)
+```
+
+4. plot rates for each airline and city
+
+```{r}
+
+# ALASKA
+alctplot <- 
+  aircttbl %>% 
+  filter(airline == "ALASKA") %>% 
+  ungroup() %>%
+  select(city, del_rate, ontime_rate) %>%
+  gather(del_rate, ontime_rate, -city) %>%
+  rename(status = del_rate, flightcts = ontime_rate) 
+
+# AM WEST
+amctplot <- 
+  aircttbl %>% 
+  filter(airline == "AM WEST") %>% 
+  ungroup() %>%
+  select(city, del_rate, ontime_rate) %>%
+  gather(del_rate, ontime_rate, -city) %>%
+  rename(status = del_rate, flightcts = ontime_rate) 
+```
+
+ALASKA PLOT
+```{r}
+ggplot(alctplot,aes(x=city,y=flightcts,fill=factor(status)))+
+  geom_bar(stat="identity",position="dodge")+
+#  scale_fill_discrete(name="status",
+#                      breaks=c(1, 2),
+#                      labels=c("delay", "ontime"))+
+  xlab("airline")+ylab("rates") + theme_tufte()
+```
+
+AM WEST PLOT
+```{r}
+ggplot(amctplot,aes(x=city,y=flightcts,fill=factor(status)))+
+  geom_bar(stat="identity",position="dodge")+
+#  scale_fill_discrete(name="status",
+#                      breaks=c(1, 2),
+#                      labels=c("delay", "ontime"))+
+  xlab("airline")+ylab("rates") + theme_tufte()
+```
+
+
+```{r}
+delctplot <- aircttbl %>%
+  select(airline, city, del_rate)
+delctplot
+```
+```{r}
+ggplot(delctplot,aes(x=city,y=del_rate,fill=factor(airline)))+
+  geom_bar(stat="identity",position="dodge")+
+  #scale_fill_discrete(name="status",
+  #                    breaks=c(1, 2),
+  #                    labels=c("alaska", "am west"))+
+  xlab("city")+ylab("rates") + theme_tufte()
+```
+
+#### FINDINGS
+- Because these airlines may have different overall volume of flights, I converted the data into delay/on time rates.
+
+- Delay rates were more useful, and since they were the inverse of on time rates, I used delay rates as the main metric for comparison. 
+
+- Overall, the delay trends for each city were similar between both airlines. 
+
+- Both airlines had the highest delay rates in San Francisco and lowest delay rates in Phoenix. 
+
+- This indicates that the primary cause of the delay is related to the location as opposed to the airline. 
+
+- However, the magnitude of the delay in each differed between the two airlines.
+
+- The biggest gap is in San Francisco, where AM West has a delay rate 12 percentage points higher than Alaska. 
+
+- There is also a sizeable gap in Seattle (9 pct pts), which indicates that AM West may have some inefficiencies - whether it is due to slower operations, equipment, etc that is an opportunity for AM West to address to catch up to Alaska.  
+
+
