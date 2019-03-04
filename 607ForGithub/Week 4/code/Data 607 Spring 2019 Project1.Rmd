@@ -1,39 +1,53 @@
 ---
-title: "Data 607 Spring 2019 Project1"
+title: "Data 607 Spring 2019 Project 1"
 author: "Eunice Ok"
 date: "2/24/2019"
 output: html_document
 ---
+### OBJECTIVE 
+To convert text file into a dataframe with the following columns: Player’s Name, Player’s State, Total Number of Points, Player’s Pre-Rating, and Average Pre Chess Rating of Opponents
 
+### IMPORT PACKAGES 
 ```{r}
 library(readr)
 library(stringr)
 ```
 
+### READ IN FILE
 ```{r}
 file = "/Users/euniceok/PycharmProjects/cuny/spring2019/Week4/data/tournamentinfo.txt"
 df <- read.table(file, fill=TRUE, header = FALSE, sep='|',stringsAsFactors = FALSE)
-dim(df)
-```
-```{r}
-str(df,vec.len=1)
-```
-```{r}
-head(df[,c("V1","V2")])
-```
-```{r}
-df$V1 <- str_replace_all(df$V1,pattern ="[-]","")
-class(df[1,c("V1")]) # should be character
+
+# dim(df) [1] 196  11
+# str(df,vec.len=1)
+#'data.frame':	196 obs. of  11 variables:
+# $ V1 : chr  "-----------------------------------------------------------------------------------------" ...
+# $ V2 : chr  "" ...
+# $ V3 : chr  "" ...
+# $ V4 : chr  "" ...
+# $ V5 : chr  "" ...
+# $ V6 : chr  "" ...
+# $ V7 : chr  "" ...
+# $ V8 : chr  "" ...
+# $ V9 : chr  "" ...
+# $ V10: chr  "" ...
+# $ V11: logi  NA ...
 ```
 
+### INITIAL CLEANING
 ```{r}
+# remove weird dashes
+df$V1 <- str_replace_all(df$V1,pattern ="[-]","")
+class(df[1,c("V1")]) # confirm the first column is character
+
+# reset header 
 colnames(df) = df[3,] # make the third row the header
 df<-df[-1:-4,] # remove first 3 rows
 
 # rename columns 
 colnames(df)[1] <-"num" # rename first column with player # 
 colnames(df)[2] <-"name" # rename second column with player name
-colnames(df)[3] <- "totpts"
+colnames(df)[3] <- "totpts" # rename rest of columns
 colnames(df)[4] <- "round1"
 colnames(df)[5] <- "round2"
 colnames(df)[6] <- "round3"
@@ -41,15 +55,10 @@ colnames(df)[7] <- "round4"
 colnames(df)[8] <- "round5"
 colnames(df)[9] <- "round6"
 colnames(df)[10] <- "round7"
+df[11] <- NULL # delete column
+rownames(df) <- 1:nrow(df) # reset index
 
-# delete column
-df[11] <- NULL
-
-# reset index
-rownames(df) <- 1:nrow(df) 
-
-# create a function that deletes every n row
-Nth.delete<-function(dataframe, n)dataframe[-(seq(n,to=nrow(dataframe),by=n)),] 
+Nth.delete<-function(dataframe, n)dataframe[-(seq(n,to=nrow(dataframe),by=n)),]  # create a function that deletes every n row
 df <- Nth.delete(df,3) # delete every 3rd row 
 rownames(df) <- 1:nrow(df) # reset index
 
@@ -57,6 +66,8 @@ df.players = df[seq(1, nrow(df), 2), ] # create a subset dataframe of just playe
 rownames(df.players) <- 1:nrow(df.players)  # reset index 
 df.stats = df[seq(2, nrow(df), 2), ] # create a subset dataframe of the 2nd row of stats for ea player 
 rownames(df.stats) <- 1:nrow(df.stats)  # reset index 
+
+# create new columns
 colnames(df.stats)[1] <-"state"
 colnames(df.stats)[2] <- "id"
 df.stats <- df.stats[,c("state","id")]
@@ -73,7 +84,7 @@ newdf$prescore <- as.numeric(as.character(newdf$prescore)) # convert both scores
 newdf$postscore <- as.numeric(as.character(newdf$postscore))
 newdf$round1 <- str_replace_all(str_replace_all(newdf$round1, pattern = "[[:alpha:]]", ""), pattern="\\s+","")
 
-# clean up round columns
+# clean up "round"" columns
 rounds <- c('round1','round2','round3','round4','round5','round6','round7')
 therounds = newdf[rounds]
 therounds <- lapply(therounds, function(x) {
@@ -83,18 +94,15 @@ therounds <- lapply(therounds, function(x) {
 # remove old round columns and join with clean round columns
 newdf <- subset(newdf, select = -c(round1,round2,round3,round4,round5,round6,round7))
 newdf <- cbind(newdf, therounds)
-```
 
-```{r}
 head(newdf,n=10)
 ```
 
-
+### OUTPUT TO CSV
 ```{r}
 # not sure how to average the opponents scores in R. write temporary csv to complete rest of assignment in python
 write.csv(newdf, file = "/Users/euniceok/PycharmProjects/cuny/spring2019/Week4/output/tournamenttmpdf.csv")
 
-# Final output
-# Player’s Name, Player’s State, Total Number of Points, Player’s Pre-Rating, and Average Pre Chess Rating of Opponents
+
 ```
 
