@@ -59,6 +59,7 @@ airline_ontime <- tmp %>%
 
 airline_tbl <- inner_join(airline_delay, airline_ontime, by="airline")
 airline_tbl %>% select(airline,del_rate,ontime_rate)
+airline_tbl
 ```
 
 ```{r}
@@ -70,7 +71,7 @@ atplot
 ```
 
 
-2. plot delay and ontime rates for each airline
+2. plot delay and ontime flight counts for each airline
 ```{r}
 g <- ggplot(atplot, aes(airline, flightcts))
 g + geom_bar(aes(fill=status), width = 0.5, stat="identity") + 
@@ -94,7 +95,9 @@ aircityontime <- tmp %>%
 
 aircttbl <- inner_join(aircitydelay, aircityontime, by= c("airline" = "airline","city"="city"))
 aircttbl %>% select(airline, city, delays, ontime, del_rate, ontime_rate)
+
 ```
+
 
 4. plot rates for each airline and city
 
@@ -167,8 +170,12 @@ ggplot(delctplot,aes(x=city,y=del_rate,fill=factor(airline)))+
 
 - However, the magnitude of the delay in each differed between the two airlines.
 
+- Interestingly, at a high level across all cities, Alaska had a higher delay rate. But within each city, AM West had higher delay rates. Perhaps this is an example of Simpson's Paradox. 
+
 - The biggest gap is in San Francisco, where AM West has a delay rate 12 percentage points higher than Alaska. 
 
 - There is also a sizeable gap in Seattle (9 pct pts), which indicates that AM West may have some inefficiencies - whether it is due to slower operations, equipment, etc that is an opportunity for AM West to address to catch up to Alaska.  
+
+
 
 

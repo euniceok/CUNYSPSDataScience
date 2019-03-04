@@ -199,6 +199,12 @@ airline_tbl %&gt;% select(airline,del_rate,ontime_rate)</code></pre>
 ##   &lt;fct&gt;      &lt;dbl&gt;       &lt;dbl&gt;
 ## 1 ALASKA     0.133       0.867
 ## 2 AM WEST    0.109       0.891</code></pre>
+<pre class="r"><code>airline_tbl</code></pre>
+<pre><code>## # A tibble: 2 x 7
+##   airline delays totals.x del_rate ontime totals.y ontime_rate
+##   &lt;fct&gt;    &lt;int&gt;    &lt;int&gt;    &lt;dbl&gt;  &lt;int&gt;    &lt;int&gt;       &lt;dbl&gt;
+## 1 ALASKA     501     3775    0.133   3274     3775       0.867
+## 2 AM WEST    787     7225    0.109   6438     7225       0.891</code></pre>
 <pre class="r"><code>atplot &lt;- airline_tbl %&gt;% 
     select(airline,delays, ontime) %&gt;%
     gather(delays, ontime, -airline) %&gt;%
@@ -212,7 +218,7 @@ atplot</code></pre>
 ## 3 ALASKA  ontime      3274
 ## 4 AM WEST ontime      6438</code></pre>
 <ol start="2" style="list-style-type: decimal">
-<li>plot delay and ontime rates for each airline</li>
+<li>plot delay and ontime flight counts for each airline</li>
 </ol>
 <pre class="r"><code>g &lt;- ggplot(atplot, aes(airline, flightcts))
 g + geom_bar(aes(fill=status), width = 0.5, stat=&quot;identity&quot;) + 
@@ -289,6 +295,7 @@ delctplot</code></pre>
 <li><p>Both airlines had the highest delay rates in San Francisco and lowest delay rates in Phoenix.</p></li>
 <li><p>This indicates that the primary cause of the delay is related to the location as opposed to the airline.</p></li>
 <li><p>However, the magnitude of the delay in each differed between the two airlines.</p></li>
+<li><p>Interestingly, at a high level across all cities, Alaska had a higher delay rate. But within each city, AM West had higher delay rates. Perhaps this is an example of Simpson’s Paradox.</p></li>
 <li><p>The biggest gap is in San Francisco, where AM West has a delay rate 12 percentage points higher than Alaska.</p></li>
 <li><p>There is also a sizeable gap in Seattle (9 pct pts), which indicates that AM West may have some inefficiencies - whether it is due to slower operations, equipment, etc that is an opportunity for AM West to address to catch up to Alaska.</p></li>
 </ul>
