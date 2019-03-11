@@ -1,0 +1,167 @@
+---
+title: "Data 607 Spring 2019 Project 2"
+author: "Eunice Ok"
+date: "3/10/2019"
+output: html_document
+---
+
+Note: Below is the tidying and merging of three wide global datasets from UNICEF. THe merged dataset comprises of child, infant, and under-five mortality rates from 1950 to 2017 in each country.
+
+#### Import packages
+```{r message=FALSE}
+require(tidyr)
+require(dplyr)
+require(reshape)
+require(stringr)
+require(car)
+library(ggplot2)
+```
+
+
+#### Read in data
+```{r}
+childfile = '/Users/euniceok/PycharmProjects/cuny/spring2019/Week6/data/child1_4mortalityrate.csv'
+infantfile = '/Users/euniceok/PycharmProjects/cuny/spring2019/Week6/data/infant0_1mortalityrate.csv'
+und5file = '/Users/euniceok/PycharmProjects/cuny/spring2019/Week6/data/underfivemortalityrate.csv'
+
+child = read.csv(childfile, skip=10, header=T)
+child = child[c(1:139)]
+
+infant = read.csv(infantfile, skip=10, header=T)
+infant = infant[c(1:139)]
+
+und5 = read.csv(und5file, skip=10, header=T)
+```
+
+
+#### Transformations
+```{r}
+# But first, identify shapes
+print(dim(child))
+print(dim(infant))
+print(dim(und5))
+```
+```{r, }
+# check out how the data looks right now
+print(head(child, n=1))
+#print(head(infant, n=1))
+#print(head(und5, n=1))
+```
+
+```{r message=FALSE, warning='false'}
+# Bind the 3 datasets together - child, infant, und5
+master = data.frame()
+datasets = list(child ,infant,und5)
+
+for (df in datasets) {
+  df = filter(df, Uncertainty.bounds.  == 'Median')
+  df = gather(df, Years, Value, 4:139)
+  df$Type = str_sub(df$Years, end = -6)
+  df$Year = str_sub(df$Years, start =-4, end =  -1)
+  df = select(df, -Uncertainty.bounds., -Years, -ISO.Code)
+  # print(dim(df))
+  master = bind_rows(master,df)
+  # print(dim(master))
+  }
+```
+
+```{r}
+# Check out master dataframe to make sure 3 dataframes were properly bound
+print(dim(master))
+print(head(master))
+print(tail(master))
+```
+```{r message=FALSE}
+require(plyr)
+```
+
+
+```{r}
+# Check out unique types 
+print(unique(master$Type))
+
+ 
+
+# Recode all types consistently 
+master$NewType = revalue(master$Type, c("Child.deaths.1.4years" = "CMR", 
+                       "Infant.Deaths" = "IMR", "Under.five.Deaths" = "U5MR", 
+                       "CMR" = "CMR", "IMR" = "IMR", 
+                      "U5MR" = "U5MR"))
+
+# Check out unique types again
+print(unique(master$NewType))
+master = select(master, -Type)
+detach(package:plyr)
+```
+
+```{r}
+# Check out the classes of each column
+sapply(master, class)
+```
+
+
+#### Analysis
+
+Note on Type and Values 
+
+- IMR is the infant mortality rate (Probability of dying between birth and exactly 1 year of age, expressed per 1,000 live births)
+
+- CMR is the child mortality rate (Probability of dying between 1 and  4 years of age, expressed per 1,000 children age 1) 
+
+- U5MR is the under-five mortality rate (Probability of dying between birth and exactly 5 years of age, expressed per 1,000 live births)
+
+```{r}
+# Remove null values for countries that have no mortality rate entries a given year.
+# This shrinks the dataset by 17.5K rows
+# print(dim(master))
+newmaster = master[complete.cases(master),]
+# print(dim(newmaster))
+print(tail(newmaster, n=10))
+```
+
+
+How do infant and child and under-five mortality rates compare with each other globally? 
+```{r}
+newmaster %>%
+  group_by(NewType) %>%
+  summarize(mean_mortality = mean(Value), total_mortality = sum(Value))
+```
+There were a total of 500 million infant mortality deaths in the world and 23.5K on average per country in the past 67 years.
+Although infant mortality is only measured across one year, there is a 2.5 higher likelihood, on average, that an child will die between birth and 1 year of age than between the ages of 1 and 4.  
+
+```{r}
+u5mragg = newmaster %>%
+  group_by(NewType, Year) %>%
+  summarize(mean_mortality = mean(Value), total_mortality = sum(Value)) %>%
+  filter(Year %in% c('1950', '1960', '1970', '1980','1990','2000','2010'))  %>%
+  filter(NewType == 'U5MR')
+u5mragg
+```
+```{r}
+# mean under 5 mortality globally over time
+ggplot(data=u5mragg, aes(x=Year, y=mean_mortality, group=1)) +
+  geom_line()+
+  geom_point()
+```
+```{r}
+# total under 5 mortality globally over time
+ggplot(data=u5mragg, aes(x=Year, y=total_mortality, group=1)) +
+  geom_line()+
+  geom_point()
+```
+```{r}
+# count of countries included in evaluation year over year
+ctyear = dplyr::count(newmaster, Year)
+
+ggplot(data=ctyear, aes(x=Year, y=n, group=1)) +
+  geom_line()+
+  geom_point() + 
+  theme(axis.text.x = element_text(angle = 90, vjust = 1, hjust=1))
+
+```
+
+
+#### Conclusion
+The under five mortality rate (U5M) encompasses both IMR and CMR and therefore a general metric that is a good proxy for both. On average, the U5M appears to be decreasing over the years globally. Though it is odd that the total incidents of U5M peak in 1980, this is due to the fact that the number of countries included in the dataset increased steadily until 1980. After that point, it held steady. This supports the conclusion extracted from both the mean and total graphs that the U5M rate is decreasing. 
+
+Obviously, this analysis is very high level and there is opportunity to dig into trends of individual countries, regions, etc. In addition, joining this dataset with other global economic and health indicators would open up further doors to digging into the possible causes of the global decrease in U5M rate and -- I suspect -- big differences across countries and regions.  
