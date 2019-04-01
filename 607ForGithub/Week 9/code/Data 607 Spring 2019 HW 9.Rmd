@@ -28,7 +28,8 @@ dreamer1 <- GET(url_dreamers, accept_json())
 # check for error (TRUE if above 400)
 http_error(dreamer1)
 ```
-```{r, message = FALSE}
+
+```{r echo = T, results = 'hide'}
 # take a look at what was fetched - results not included bc contains key
 dreamer1
 ```

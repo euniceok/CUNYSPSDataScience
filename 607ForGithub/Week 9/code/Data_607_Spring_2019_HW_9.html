@@ -147,11 +147,6 @@ http_error(dreamer1)</code></pre>
 <pre><code>## [1] FALSE</code></pre>
 <pre class="r"><code># take a look at what was fetched - results not included bc contains key
 dreamer1</code></pre>
-<pre><code>## Response [http://api.nytimes.com/svc/search/v2/articlesearch.json?q=dreamers&amp;api-key=BkgEFrgt24bwpeZ3xr0f4G0O2nFVpqf0]
-##   Date: 2019-04-01 03:01
-##   Status: 200
-##   Content-Type: application/json;charset=UTF-8
-##   Size: 170 kB</code></pre>
 <pre class="r"><code># Attempt to convert parsed response of json in the form of nested lists into a dataframe by extracting columns and using dplyr and base R.
 # However, looking at details, there are a ton of columns and it looks too complicated, so look for another way to do this. 
 details &lt;- content(dreamer1, as=&quot;parsed&quot;)
