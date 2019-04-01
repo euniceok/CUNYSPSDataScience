@@ -1,0 +1,152 @@
+---
+title: "Data 607 Spring 2019 HW 9"
+date: "3/31/2019"
+output: html_document
+---
+
+### Assignment: 
+- The New York Times web site provides a rich set of APIs, as described here: http://developer.nytimes.com/docs
+- You’ll need to start by signing up for an API key.
+- Your task is to choose one of the New York Times APIs, construct an interface in R to read in the JSON data, and transform it to an R dataframe.
+
+```{r setup, message=FALSE}
+library(httr)
+library(jsonlite)
+library(tidyr)
+library(lubridate)
+```
+
+```{r, include=FALSE}
+nyt_key = "BkgEFrgt24bwpeZ3xr0f4G0O2nFVpqf0" 
+```
+
+#### Initial experimentation with httr
+```{r}
+# Use GET to send an API request to the article search console of NYT.
+url_dreamers<- paste0("http://api.nytimes.com/svc/search/v2/articlesearch.json?q=dreamers&api-key=",nyt_key, sep="")
+dreamer1 <- GET(url_dreamers, accept_json())
+# check for error (TRUE if above 400)
+http_error(dreamer1)
+```
+```{r, message = FALSE}
+# take a look at what was fetched - results not included bc contains key
+dreamer1
+```
+
+```{r}
+# Attempt to convert parsed response of json in the form of nested lists into a dataframe by extracting columns and using dplyr and base R.
+# However, looking at details, there are a ton of columns and it looks too complicated, so look for another way to do this. 
+details <- content(dreamer1, as="parsed")
+# details$response$docs
+```
+
+
+
+#### Found below tutorial and decided to use jsonlite instead of httr 
+
+Reference: http://www.storybench.org/working-with-the-new-york-times-api-in-r/ 
+```{r}
+# Search for articles on Dreamers, registered undocumented individuals, given the recent political spotlight
+dreamers <- fromJSON(url_dreamers, flatten=TRUE) %>% data.frame()
+
+# Take a look at the columns
+colnames(dreamers)
+```
+```{r}
+# The search returned 10 articles with 33 columns bc each page/request has a max of 10 articles
+dim(dreamers) 
+```
+
+```{r}
+# Set some parameters to grab all the hits by identifying a date range and max page # to loop through
+term <- "dreamers" 
+begin_date <- "20190101" # YYYYMMDD
+end_date <- "20190331"
+```
+
+```{r}
+# Concatenate pieces of the url for the api call
+baseurl <- paste0("http://api.nytimes.com/svc/search/v2/articlesearch.json?q=",term,
+                  "&begin_date=",begin_date,"&end_date=",end_date,
+                  "&facet_filter=true&api-key=",nyt_key, sep="")
+```
+
+```{r}
+# Identify the # of hits to calculate the max pages 
+initialQuery <- fromJSON(baseurl)
+print(initialQuery$response$meta$hits[1]) # returns the total # of hits
+maxPages <- ceiling((initialQuery$response$meta$hits[1] / 10) -1) # reduce by 1 because loop starts with page 0
+print(maxPages) # 8 is the max page, so starting from 0, a total of 9 pages or results 
+```
+
+```{r, message=FALSE}
+# Loop through all pages to get all the hits
+pages <- list()
+for(i in 0:maxPages){
+  nytSearch <- fromJSON(paste0(baseurl, "&page=", i), flatten = TRUE) %>% data.frame() 
+  message("Retrieving page ", i)
+  pages[[i+1]] <- nytSearch 
+  Sys.sleep(9) # because there are 3 previous calls in under a min and the api call limit is 10/min 
+}
+```
+```{r}
+# Save the page results in a dataframe
+dreamer_search <- rbind_pages(pages)
+# Take a peek at 2 informative columns. Note noise. Book references arelikely unrelated to registered undocumented individuals 
+head(dreamer_search, n=10)[c('response.docs.web_url', 'response.docs.snippet')]  
+```
+```{r, message=FALSE}
+# tidyverse has a conflict with jsonlite so import it later
+library(tidyverse)
+```
+
+
+
+#### Make sense of output with some plots
+
+##### Among type of materials do articles on Dreamers tend to appear? 
+
+```{r}
+# Visualize coverage of dreamers by type of material
+dreamer_search %>% 
+  group_by(response.docs.type_of_material) %>%
+  summarize(count=n()) %>%
+  mutate(percent = (count / sum(count))*100) %>%
+  ggplot() +
+  geom_bar(aes(y=percent, x=response.docs.type_of_material, fill=response.docs.type_of_material), stat = "identity") + coord_flip()
+```
+
+Articles on Dreamers tend to be concentrated under the News materials then in the Op-ed materials From an initial glance at the results, the Review section is likely not referring to the Dreamers who are registered undocumented individuals living in the U.S. 
+
+
+##### What sections do Dreamer articles tend to appear?
+
+```{r}
+# Visualize coverage of dreamers by section
+dreamer_search %>% 
+  group_by(response.docs.section_name) %>%
+  summarize(count=n()) %>%
+  mutate(percent = (count / sum(count))*100) %>%
+  ggplot() +
+  geom_bar(aes(y=percent, x=response.docs.section_name, fill=response.docs.section_name), stat = "identity") + coord_flip()
+```
+
+We see that almost the majority of articles written on Dreamers is in the U.S. section. 14% of articles are in the Opinion section, then 8% in Books and 7% in Arts. The latter categories may be noise.
+
+
+#####  When were Dreamer articles more frequent in the last 3 months? 
+
+```{r}
+# plot trends in how frequently dreamers are mentioned in the last 3 months
+dreamer_search %>%
+  mutate(pubDay=gsub("T.*","",response.docs.pub_date)) %>%
+  group_by(pubDay) %>%
+  summarise(count=n()) %>%
+  mutate(date=ymd(pubDay)) %>%
+  arrange(pubDay) %>%
+  #filter(count >= 2) %>%
+  ggplot() +
+  geom_bar(aes(x=pubDay, y=count), stat="identity") + coord_flip()
+```
+
+We see spikes in the early second half of January, indicating that there may have been incidents regarding Dreamers earlier in the month. Since then, we see that there's been fewer articles but still steady coverage in February and March. To posit a theory about the spike, it occurs after a series of political incidents, starting with Pres. Trump's demand for funding for a border wall. He threatened a government shut-down if his demands were not met. In response, some Democrats responded by fighting for protections for Dreamers and DACA recipients. As such, the trends above may be reflecting the consequences of these political events.
