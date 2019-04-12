@@ -1,0 +1,55 @@
+---
+title: "Data 607 Spring 2019 HW 11"
+date: "4/11/2019"
+output: 
+  html_document:
+    theme: united
+    highlight: "espresso"
+    toc: true
+    toc_float: true
+---
+
+### 1 Scenario design analysis
+Perform a Scenario Design analysis as described below. Consider whether it makes sense for your selected recommender system to perform scenario design twice, once for the organization (e.g. Amazon.com) and once for the organization's customers.
+
+##### Identify a recommender system web site
+
+Pandora
+
+##### Answer the three scenario design questions for this web site.  
+
+i. Who are your target users?
+
+Anyone who listens to music 
+
+ii. What are their key goals?
+
+Have an enjoyable listening experience.
+
+iii. How can you help them accomplish those goals?
+
+By recommending music that they would enjoy listening to, even if they didn't know it existed before being recommended. 
+
+
+### 2 Reverse engineering the site
+Attempt to reverse engineer what you can about the site, from the site interface and any available information that you can find on the Internet or elsewhere.
+
+Pandora is unique because unlike other companies that leverage recommendation engines, it is one of few whose entire business model hinges on the success of its recommendation engine. Its success is driven by a combination of thoughtfully designed and tested algorithms and intense manual labor.
+
+Pandora enables listeners to experience music through online radio, where songs are curated in the form of stations. These stations can be generated a multitude of ways. Listeners may select a few songs or artists they like or select a genre then a pre-built station. Pandora allows users to refine stations by soliciting thumbs up and thumbs down for each song and enabling selection of "Crowd Faves," "Discovery," "Deep Cuts," "Newly Released," and "Artist Only". These "tuning" stations give users their choice of balance between novel and familiar. With the AutoPlay feature enabled, similar songs will play endlessly. 
+
+The secret to Pandora's recommendation engine appears to be the Music Genome Project. Instead of matching users with other users with similar interests, Pandora suggests artists and songs that are similar to the song choices of the listener. This is based on a taxonomy of 450 attributes that describe a song. The process of tagging each song with these attributes is performed by musicians and is manual. Once songs are classified, Pandora compares a the description of a listener's musical tastes  with the song classification in the database. The output is a collection of songs. Pandora uses a proximity measure algorithm to identify the neighorhood of music to play.
+
+### 3 Recommendations
+Include specific recommendations about how to improve the site's recommendation capabilities going forward. 
+
+One recommendation (suggested by an essayist cited below) based on the observation that the bottleneck of Pandora's recommendation process is the manual tagging of 450 attributes for each song. There may be an opportunity to crowdsource this process and leverage employees for quality control.      
+
+### 4 References 
+
+- https://www.pandora.com/about/mgp
+- https://courses.cs.washington.edu/courses/csep521/07wi/prj/michael.pdf 
+- https://www.theserverside.com/feature/How-Pandora-built-a-better-recommendation-engine 
+
+Create your report using an R Markdown file, and create a discussion thread with a link to the GitHub repo where your Markdown file notebook resides.  You are not expected to need to write code for this discussion assignment.
+
