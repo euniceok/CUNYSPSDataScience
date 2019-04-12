@@ -18,27 +18,30 @@ Pandora
 
 ##### Answer the three scenario design questions for this web site.  
 
-i. Who are your target users?
+**i. Who are your target users?**
 
-Anyone who listens to music 
+Anyone who listens to music
 
-ii. What are their key goals?
+**ii. What are their key goals?**
 
-Have an enjoyable listening experience.
+Pandora wants to gain and retain users who are happy because they are a constant stream of songs they like with minimal selection effort.  
+Users want an enjoyable listening experience of songs, both familiar and novel. 
 
-iii. How can you help them accomplish those goals?
+**iii. How can you help them accomplish those goals?**
 
-By recommending music that they would enjoy listening to, even if they didn't know it existed before being recommended. 
+Pandora can accomplish its goals mainly by engineering high quality algorithms that recommend old and new music that users would enjoy listening to and by scaling the system in a seamless way to as many customers as possible. 
 
 
-### 2 Reverse engineering the site
+### 2 Reverse engineering
 Attempt to reverse engineer what you can about the site, from the site interface and any available information that you can find on the Internet or elsewhere.
 
 Pandora is unique because unlike other companies that leverage recommendation engines, it is one of few whose entire business model hinges on the success of its recommendation engine. Its success is driven by a combination of thoughtfully designed and tested algorithms and intense manual labor.
 
-Pandora enables listeners to experience music through online radio, where songs are curated in the form of stations. These stations can be generated a multitude of ways. Listeners may select a few songs or artists they like or select a genre then a pre-built station. Pandora allows users to refine stations by soliciting thumbs up and thumbs down for each song and enabling selection of "Crowd Faves," "Discovery," "Deep Cuts," "Newly Released," and "Artist Only". These "tuning" stations give users their choice of balance between novel and familiar. With the AutoPlay feature enabled, similar songs will play endlessly. 
+Pandora enables listeners to experience music through online radio, where songs are curated in the form of stations. These stations can be generated a multitude of ways. Listeners may select a few songs or artists they like or select a genre then a pre-built station. Pandora allows users to refine stations by soliciting thumbs up and thumbs down for each song and enabling selection of "Crowd Faves," "Discovery," "Deep Cuts," "Newly Released," and "Artist Only". These "tuning" stations give users their choice of balance between novel and familiar. With the AutoPlay feature enabled, similar songs continue to play. 
 
-The secret to Pandora's recommendation engine appears to be the Music Genome Project. Instead of matching users with other users with similar interests, Pandora suggests artists and songs that are similar to the song choices of the listener. This is based on a taxonomy of 450 attributes that describe a song. The process of tagging each song with these attributes is performed by musicians and is manual. Once songs are classified, Pandora compares a the description of a listener's musical tastes  with the song classification in the database. The output is a collection of songs. Pandora uses a proximity measure algorithm to identify the neighorhood of music to play.
+The secret to Pandora's recommendation engine appears to be the Music Genome Project. Instead of matching users with other users with similar interests, Pandora suggests artists and songs that are similar to the song choices of the listener. This is based on a taxonomy of 450 attributes that describe a song. The process of tagging each song with these attributes is performed by musicians and is manual. Once songs are classified, Pandora compares a the description of a listener's musical tastes  with the song classification in the database. The output is a collection of songs. 
+
+The research wasn't conclusive, but one article suggests that Pandora uses nearest-neighbor techniques via memory-based algorithms. In Pandora's case, the neighborhood would consist of groups of songs, as opposed to users. 
 
 ### 3 Recommendations
 Include specific recommendations about how to improve the site's recommendation capabilities going forward. 
