@@ -1,0 +1,149 @@
+---
+title: "Data 607 Spring 2019 Project 4"
+date: "4/14/2019"
+output: html_document
+---
+
+**Objective:** 
+
+Build a spam classifier using labeled training data and predict on test data
+
+
+#### Install packages
+```{r message=FALSE, warning='false'}
+library(tm) # clean/organize data
+library(wordcloud) # to display most frequent words in viz 
+suppressWarnings(library(e1071)) # for naive bayes classifier
+library(gmodels) # for confusion matrix
+suppressWarnings(library(SnowballC)) # clean/organize data
+library(tidyverse)
+```
+
+#### Read in sms dataset 
+```{r}
+filename <- '/Users/euniceok/PycharmProjects/cuny/spring2019/Week10Text/data/sms_spam.csv'
+spam <- read.csv(filename, stringsAsFactors = FALSE, encoding="UTF-8")
+spam$type <- factor(spam$type) # convert type to factor
+table(spam$type) # see how many ham vs spam messages are in the text dataset
+```
+#### Peek at word cloud vizzes of each category: spam and ham
+```{r}
+spam_messages <- subset(spam, type =="spam")
+ham_messages <- subset(spam, type=="ham")
+```
+
+###### Spam word cloud
+```{r message=FALSE, warning='false'}
+suppressWarnings(wordcloud(spam_messages$text, max.words = 100, scale = c(3, 0.5)))
+```
+
+###### Ham word cloud 
+```{r message=FALSE, warning='false'}
+suppressWarnings(wordcloud(ham_messages$text, max.words = 100, scale = c(3,0.5)))
+```
+
+Clearly, distinct sets of the most frequent words emerge in each wordcloud. 
+
+#### Data Prep
+```{r}
+# generate a corpus, a collection of text documents
+corpus <-VCorpus(VectorSource(spam$text))
+corpus
+```
+
+```{r}
+# generate document term matrix, in which row = message and col = word
+# words are lowercased, numbers and punctuation are removed and stemming is performed
+dtm <- DocumentTermMatrix(corpus, control = list(
+  tolower=TRUE,
+  removeNumbers = TRUE,
+  removePunctuation = TRUE, 
+  stemming = TRUE
+))
+dtm
+```
+
+Note: the data is very sparse and the maximal term length is 40, which seems reasonable. 
+
+#### Data Partitioning and Cleaning
+```{r}
+# Split the dataset into 75% training and 25% testing subsets.
+
+# 75% of sample size
+smp_size <-floor(0.75 * nrow(spam)) # it is 4180 
+
+# set seed to make partition reproducible
+set.seed(123)
+
+# randomly select train indeces as 75% of dataset 
+train_ind <-sample(seq_len(nrow(spam)), size=smp_size)
+
+trainLabels <- spam[train_ind,]$type
+testLabels <- spam[-train_ind,]$type
+
+# check that proportions of ham/spam are fairly similar between two datasets
+prop.table(table(trainLabels))
+```
+```{r}
+prop.table(table(testLabels))
+```
+
+```{r}
+# split data on the document term matrix (which has been pre-processed)
+train <- dtm[train_ind,]
+test <- dtm[-train_ind,]
+
+# check dimensions of subset data make sense
+print(paste(dim(train), dim(test)))
+```
+```{r}
+# identify words used more frequently than 5x to ensure model is useful
+# note, must use document term matrix data 
+freqWords <-findFreqTerms(train,5)
+freqTrain <- train[,freqWords]
+freqTest <- test[,freqWords]
+
+freqTrain
+```
+```{r}
+freqTest
+```
+Note sparsity is better and maximal term length is shorter
+
+```{r}
+# since DTM uses 1s and 0s but Naive Bayes classifer works on categorical features, 
+# convert 1 and 0 to Yes or No. Apply to every column (ie margin=2)
+convert_counts <- function(x) {
+  x <- ifelse(x > 0, "Yes", "No")
+}
+trained <- apply(freqTrain, MARGIN=2,
+               convert_counts)
+tested <- apply(freqTest, MARGIN=2,
+              convert_counts)
+```
+
+#### Training and Testing
+```{r}
+# train model
+classifier <-naiveBayes(trained, trainLabels)
+
+# check out the output for the word "call"
+# results indicate a message with this word has a higher probability of being spam
+classifier[2]$tables$call 
+```
+```{r}
+# evaluate the performance of the classifer
+testPredict <- predict(classifier, tested)
+CrossTable(testPredict, testLabels,
+           prop.chisq = FALSE, prop.t = FALSE,
+           dnn = c('predicted', 'actual'))
+```
+According to the confusion matrix, 14 + 4 or 18 out of 1394 sms messages were classified incorrectly. 
+It is more likely that users would be more concerned about actual messages accidentally classified as spam and we see that there are only 4 false negatives. This model may or may not be useful depending on what users considers is a acceptable false negative rate.   
+
+
+
+**References:** 
+
+Source data: http://www.dt.fee.unicamp.br/~tiago/smsspamcollection/  
+Tutorial: http://www.dbenson.co.uk/Rparts/subpages/spamR/ 
